@@ -184,7 +184,7 @@ class App:
         c=self.canvas;c.delete('all');w,h=max(c.winfo_width(),200),max(c.winfo_height(),150)
         receivers=receivers or {}
         if not positions and not receivers:
-            c.create_text(w/2,h/2,text='No location or recent receiver evidence\\nAdd GNSS or surveyed receiver nodes',
+            c.create_text(w/2,h/2,text='No location or recent receiver evidence\nAdd GNSS or surveyed receiver nodes',
                           fill='#a7c2d1',font=('Segoe UI',15),justify='center')
             return
         coords=[(p[1],p[2]) for p in positions]+list(receivers.values())
