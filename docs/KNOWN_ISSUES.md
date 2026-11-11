@@ -3,6 +3,9 @@
 - HIL/field/real Windows USB validation is BLOCKED; no emergency-readiness claim.
 - RSSI location is a model-based estimate with assumed calibration; no real
   accuracy demonstrated. This is ranging/multilateration, not angular triangulation.
+- Receiver coverage fallback identifies surveyed receiver sites and current
+  direct-hearing RSSI only; it does not provide distance, direction, or wearer
+  location. Sparse receiver evidence remains uncalibrated and HIL-unverified.
 - Frequency hopping, GPS module, waterproof enclosure and low-power sleep are
   not included. Continuous receive runtime is unmeasured.
 - Trust-on-first-use ordering cannot reject a previously unseen delayed frame.
