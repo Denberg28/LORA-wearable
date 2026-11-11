@@ -80,11 +80,12 @@ class App:
         cols=('id','status','seen','position','method','receivers','review')
         self.table=ttk.Treeview(root,columns=cols,show='headings',height=7,selectmode='browse')
         for col,label,width in zip(cols,('Wearable','Alert / link','Last received','Coordinates','Location source','Direct receivers','Operator'),(70,135,90,190,165,245,90)):
-            self.table.heading(col,text=label);self.table.column(col,width=width)
+            self.table.heading(col,text=label);self.table.column(col,width=int(width*(min(root.winfo_screenwidth()-72,1068)/985)))
         self.table.tag_configure('sos',background='#ffe0dc',foreground='#8c1515')
         self.table.tag_configure('stale',foreground='#846200');self.table.pack(fill='x',padx=16)
-        self.canvas=tk.Canvas(root,bg='#10212e',highlightthickness=0);self.canvas.pack(fill='both',expand=True,padx=16,pady=12)
-        ttk.Label(root,text='Offline position plot · RSSI is approximate · Review does not cancel SOS · Gateway receipt does not confirm rescue',padding=(16,0,16,12),wraplength=width-40).pack(fill='x')
+        self.canvas=tk.Canvas(root,bg='#10212e',highlightthickness=0,height=120)
+        ttk.Label(root,text='Offline position plot · RSSI is approximate · Review does not cancel SOS · Gateway receipt does not confirm rescue',padding=(16,0,16,12),wraplength=root.winfo_screenwidth()-80).pack(side='bottom',fill='x')
+        self.canvas.pack(fill='both',expand=True,padx=16,pady=12)
         self.refresh_ports();root.protocol('WM_DELETE_WINDOW',self.close)
         if args.demo:
             old=self.store.db.execute('SELECT MAX(boot) FROM ordering WHERE id=100').fetchone()[0] or 0
