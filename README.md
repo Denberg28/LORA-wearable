@@ -1,6 +1,6 @@
 # LORA wearable
 
-**0.1.0-rc.1 · TEST CANDIDATE · hardware validation BLOCKED**
+**0.1.0-rc.2 · TEST CANDIDATE · hardware validation BLOCKED**
 
 Custom Arduino firmware for the **Seeed XIAO nRF52840 + header-connected
 Wio-SX1262 kit**, and an offline Windows emergency monitor. Hold a small touch
