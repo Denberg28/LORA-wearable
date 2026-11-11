@@ -9,7 +9,7 @@
 #define RADIO_DBM 10
 #define KEY_PROVISIONED false
 static const uint8_t NETWORK_KEY[32] = {0};
-#define TOUCH_ACTIVE_HIGH true // 3.3V momentary capacitive module on D0
+#define TOUCH_ACTIVE_HIGH false // Kit's D0 onboard pushbutton pulls LOW; set true for external active-high touch output
 #define GNSS_ENABLED false // external UART GNSS, TX -> D7, GND common
 #define ANCHOR_VALID false
 #define ANCHOR_LAT_E7 0
