@@ -58,7 +58,10 @@ class App:
         self.last_health=0;self.last_alarm=0;self.connected=False;self.rejected=0
         self.error_state=None
         self.capture=None
-        root.title(f'LORA wearable · {VERSION}');root.geometry('1100x720');root.minsize(860,580)
+        root.title(f'LORA wearable · {VERSION}')
+        width=max(860,min(1100,root.winfo_screenwidth()-40))
+        height=max(580,min(720,root.winfo_screenheight()-100))
+        root.geometry(f'{width}x{height}');root.minsize(860,580)
         style=ttk.Style();style.theme_use('clam');style.configure('Treeview',rowheight=30)
         top=ttk.Frame(root,padding=16);top.pack(fill='x')
         ttk.Label(top,text='LORA wearable',font=('Segoe UI',20,'bold')).pack(side='left')
@@ -81,7 +84,7 @@ class App:
         self.table.tag_configure('sos',background='#ffe0dc',foreground='#8c1515')
         self.table.tag_configure('stale',foreground='#846200');self.table.pack(fill='x',padx=16)
         self.canvas=tk.Canvas(root,bg='#10212e',highlightthickness=0);self.canvas.pack(fill='both',expand=True,padx=16,pady=12)
-        ttk.Label(root,text='Offline position plot · RSSI is approximate · Review does not cancel SOS · Gateway receipt does not confirm rescue',padding=(16,0,16,12)).pack(fill='x')
+        ttk.Label(root,text='Offline position plot · RSSI is approximate · Review does not cancel SOS · Gateway receipt does not confirm rescue',padding=(16,0,16,12),wraplength=width-40).pack(fill='x')
         self.refresh_ports();root.protocol('WM_DELETE_WINDOW',self.close)
         if args.demo:
             old=self.store.db.execute('SELECT MAX(boot) FROM ordering WHERE id=100').fetchone()[0] or 0
@@ -240,7 +243,7 @@ class App:
         for ident,x,y in pins:
             x=w/2+x*scale;y=h/2-y*scale
             c.create_rectangle(x-5,y-5,x+5,y+5,fill='#5eaefa',outline='')
-            c.create_text(x+12,y,anchor='w',text=f'RX {ident}',fill='#5eaefa')
+            c.create_text(x,y+12,anchor='n',text=f'RX {ident}',fill='#5eaefa')
         for p,x,y in points:
             dev,lat,lon,active,valid,unc=p;x=w/2+x*scale;y=h/2-y*scale
             color='#ff6868' if active else '#58d9b6'
