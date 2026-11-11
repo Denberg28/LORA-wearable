@@ -39,4 +39,7 @@ struct Seen {
   uint16_t origin=0;uint32_t boot=0,seq=0,at=0;
 };
 inline bool same(const Seen& s,const Frame& f) { return s.origin==u16(f,6)&&s.boot==u32(f,12)&&s.seq==u32(f,16); }
+// The gateway acknowledges every newly observed STATUS independently of other
+// wearables; a global ACK throttle can starve devices transmitting in bursts.
+inline bool shouldAcknowledge(bool duplicate, const Frame& f) { return !duplicate && f.b[3]==STATUS; }
 }
