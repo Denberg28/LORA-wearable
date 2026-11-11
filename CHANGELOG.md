@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.0-rc.3 — 2026-11-11
+
+- Add direct receiver-coverage reference for the exact latest wearable beacon:
+  surveyed receiver IDs, signal RSSI and pinned receiver sites, even when
+  multilateration cannot yield a wearable position.
+- Distinguish fixed receiver squares from wearable estimates; no sparse-anchor
+  bearing, distance or invented location claims.
+- Add simulated regression checks for out-of-order observations, freshness,
+  beacon isolation and 1–2 anchor fallback. Field accuracy remains unverified.
+
 ## 0.1.0-rc.2 — 2026-11-11
 
 - Default SOS input now matches Wio-SX1262's onboard active-low D0 button;

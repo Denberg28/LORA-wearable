@@ -57,6 +57,17 @@ real button voltage, 100-trial multiwearable delivery and congested RF behavior
 remain **BLOCKED** until measured in HIL. CI must rerun all gates on the final
 commit; prior 0.1.0-rc.1 evidence is not transferable without verification.
 
+## Revision 0.1.0-rc.3 verification additions
+
+Coverage-only fallback when location cannot be estimated: receiver observations
+are accepted only for the latest wearable generation/sequence and must originate
+from surveyed allowlisted direct receivers; observations older than 30 s are
+excluded. UI marks fixed receivers with squares, never as wearable locations.
+New simulator regressions cover observation-before-status, one/two receivers,
+no invented position, different beacon, and expiration. GitHub CI must verify
+Windows UI + firmware + packaging for the exact merge commit. Real RF RSSI,
+actual receiver footprint and accuracy remain **BLOCKED** pending HIL.
+
 ## Release criteria
 
 The workflow runs source checks, native/Python tests, all3 real MCU builds,

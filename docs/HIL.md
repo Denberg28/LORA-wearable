@@ -51,6 +51,13 @@ Windows version and app version. Start at low permitted power on a bench.
    indoors/outdoors, body/antenna orientations, RSSI, estimated position, error,
    and indicative radius. Report median/p95/max error; no advertised accuracy
    until calibrated evidence exists. Test collinear and missing-node cases.
+   With exactly one, then two surveyed receivers hearing the same wearable
+   beacon directly, verify the Windows monitor displays receiver ID and RSSI,
+   plots squares at fixed surveyed receiver locations, and shows wearable
+   position UNKNOWN (unless a clearly labeled independent last-known fix
+   exists). Check that an unrelated/old beacon cannot contribute to coverage,
+   and that sightings expire after 30 s without being shown as current. The
+   receiver sites are not estimates of wearer direction, distance, or position.
 10. **Load/endurance:** run8 h with one wearable/three relays, intermittent SOS,
     USB interruptions and link fades. Record memory, disk use, TX errors, queue
     drops and delivery times. Any unexplained loss/crash/drop blocks stable.

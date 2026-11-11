@@ -78,6 +78,29 @@ class Store:
             self.db.execute('UPDATE devices SET lat=?,lon=?,fix_time=?,method=?,uncertainty=? WHERE id=?',
                 (result.lat,result.lon,now,'RSSI estimate',result.uncertainty_m,device))
 
+    def receiver_coverage(self, device, now=None):
+        """Direct receiver sightings for the latest wearable beacon, not a position.
+
+        One or two receivers can guide a search but do not establish range,
+        bearing, or a wearable coordinate. No sightings from older beacons mix.
+        """
+        now = time.time() if now is None else now
+        state = self.db.execute('SELECT boot,seq FROM devices WHERE id=?', (device,)).fetchone()
+        if not state:
+            return []
+        heard = self.db.execute(
+            '''SELECT anchor,rssi,at FROM observations
+               WHERE target=? AND boot=? AND seq=? AND at BETWEEN ? AND ?
+               ORDER BY rssi DESC,anchor ASC''',
+            (device,state[0],state[1],now-30,now)).fetchall()
+        result = []
+        for ident, rssi, received in heard:
+            anchor = self.anchors.get(str(ident))
+            if anchor:
+                result.append((ident, float(rssi), max(0.0, now-received),
+                               float(anchor['lat']), float(anchor['lon'])))
+        return result
+
     def rows(self):
         return self.db.execute('SELECT id,active,seen,lat,lon,fix_time,method,uncertainty,reviewed FROM devices ORDER BY active DESC,id').fetchall()
 

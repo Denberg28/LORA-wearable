@@ -1,4 +1,10 @@
-LORA wearable 0.1.0-rc.2 controlled-validation candidate.
+LORA wearable 0.1.0-rc.3 controlled-validation candidate.
+
+Changes from rc.2: the Windows monitor now reports which surveyed direct
+receivers heard the latest wearable beacon, even without enough evidence to
+estimate a wearable position. Receiver sites are plotted as distinct squares.
+These are coverage references, **not** range, bearing, triangulation, or proof
+of a wearable's location. Simulated freshness/provenance tests added.
 
 Changes from rc.1: default onboard active-low SOS button; per-unique-status
 gateway ACK scheduling (no global multiwearable throttle), native ACK

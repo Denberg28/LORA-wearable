@@ -1,6 +1,6 @@
 # LORA wearable
 
-**0.1.0-rc.2 · TEST CANDIDATE · hardware validation BLOCKED**
+**0.1.0-rc.3 · TEST CANDIDATE · hardware validation BLOCKED**
 
 Custom Arduino firmware for the **Seeed XIAO nRF52840 + header-connected
 Wio-SX1262 kit**, and an offline Windows emergency monitor. Hold a small touch
@@ -8,6 +8,9 @@ button for three seconds to send SOS through a bounded LoRa relay network.
 The USB base records wearable status in the Windows monitor. Optional external
 UART GNSS gives GPS coordinates; three or more surveyed receivers can produce
 a coarse RSSI location estimate when a current GPS fix is unavailable.
+One or two surveyed direct receivers can still supply **coverage evidence**:
+which receiver heard the latest beacon, its RSSI, and its surveyed site;
+**none of these sightings is the wearer's location**.
 
 This is a controlled-validation prototype, not a validated emergency service.
 No range, battery endurance, delivery rate or real location accuracy has been
@@ -99,6 +102,12 @@ body shielding, buildings, antenna orientation and multipath. The first release
 uses an assumed -40 dBm at 1 m and path-loss exponent 2.7. Indicative uncertainty
 is **not a statistical confidence radius**; field calibration remains required.
 Degenerate geometry and inconsistent solutions produce unknown/last-known location.
+For a new beacon heard by fewer than three surveyed receivers, the monitor
+shows receiver names and RSSI and marks the wearable position unknown unless
+an independent current/last-known location exists. Receiver squares on the
+offline plot are **fixed receiver sites**, not triangulated wearable positions.
+Coverage is shown only for the latest exact beacon and observations <=30 s old.
+RSSI ranking is not bearing, distance, or a search-radius guarantee.
 
 ## Reproducible command-line build
 
