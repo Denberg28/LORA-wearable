@@ -176,7 +176,7 @@ class App:
                         self.last_health=0;self.error_state=f"GATEWAY FAULT: {data.get('reason')}"
                         self.status.set(self.error_state)
                     else:
-                        self.store.ingest(line)
+                        self.store.ingest(line,now=now)
                 except (ValueError,TypeError,KeyError,AttributeError):
                     self.rejected+=1
                 except Exception as e:
