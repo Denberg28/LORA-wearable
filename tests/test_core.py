@@ -57,6 +57,34 @@ class StateTests(unittest.TestCase):
         # Different beacons must never mix into a location solution.
         s.ingest(packet(seq=2),103)
         self.assertLess(s.rows()[0][5],103)
+    def test_receiver_coverage_is_current_direct_sighting_not_location(self):
+        anchors={'10':{'lat':13,'lon':123},'11':{'lat':13.001,'lon':123},
+                 '12':{'lat':13,'lon':123.001}}
+        s=Store(':memory:',anchors=anchors)
+        # Observation may arrive before the referenced status packet.
+        self.assertTrue(s.ingest(packet(origin=10,kind=3,seq=1,target=100,
+                                        ref_boot=1,ref_seq=1,rssi=-79,lat=0,lon=0),100))
+        self.assertEqual(s.receiver_coverage(100,100),[])
+        s.ingest(packet(seq=1,lat=None,lon=None),101)
+        self.assertEqual(s.rows()[0][3:5],(None,None))
+        self.assertEqual([(x[0],x[1]) for x in s.receiver_coverage(100,101)],[(10,-79)])
+        self.assertTrue(s.ingest(packet(origin=11,kind=3,seq=1,target=100,
+                                        ref_boot=1,ref_seq=1,rssi=-65,lat=90,lon=180),102))
+        self.assertEqual([x[0] for x in s.receiver_coverage(100,103)],[11,10])
+        self.assertEqual(s.rows()[0][3:5],(None,None))
+        # A new status must never display an observation from a previous beacon.
+        s.ingest(packet(seq=2,lat=None,lon=None),104)
+        self.assertEqual(s.receiver_coverage(100,104),[])
+        self.assertTrue(s.ingest(packet(origin=12,kind=3,seq=1,target=100,
+                                        ref_boot=1,ref_seq=2,rssi=-82),105))
+        self.assertEqual([x[0] for x in s.receiver_coverage(100,105)],[12])
+        self.assertEqual(s.receiver_coverage(100,136),[])
+        self.assertEqual(s.rows()[0][3:5],(None,None))
+        # Receiver identity/coordinate must be allowlisted and observed directly.
+        self.assertFalse(s.ingest(packet(origin=99,kind=3,target=100,ref_boot=1,
+                                         ref_seq=2,rssi=-60),137))
+        s.db.close()
+
     def test_input_bounds(self):
         s=Store(':memory:')
         for text in ('x'*1025,'[]','null','{"type":"packet"}'):
