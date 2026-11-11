@@ -19,7 +19,7 @@ TinyGPSPlus gps;
 Button touch;
 volatile bool received=false;
 bool ready=false,active=false,delivered=false,pending=false;
-uint32_t bootNumber=0,sequence=0,lastStatus=0,lastTx=0,lastHealth=0,lastAck=0;
+uint32_t bootNumber=0,sequence=0,lastStatus=0,lastTx=0,lastHealth=0;
 uint32_t dropped=0,badPackets=0,txErrors=0;
 uint8_t stateSlot=0;
 struct Saved { uint32_t magic,boot,active,check; };
@@ -100,9 +100,9 @@ void handle(Frame f,int16_t rssi) {
   if(DEVICE_ROLE==3) {
     serialFrame(f,rssi);
     // ACK means received by the USB gateway, never operator/rescuer acceptance.
-    if(f.b[3]==STATUS && uint32_t(millis()-lastAck)>1500) {
+    if(shouldAcknowledge(dup,f)) {
       Frame a=makeFrame(ACK);put16(a,20,u16(f,6));put32(a,22,u32(f,12));put32(a,26,u32(f,16));a.b[11]=f.b[11]&1;
-      enqueue(a,random(60,200));lastAck=millis();
+      enqueue(a,random(60,200));
     }
   }
   if(dup)return;
