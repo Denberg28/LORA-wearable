@@ -12,7 +12,7 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from .model import Store, load_anchors
 
-VERSION='0.1.0-rc.2'
+VERSION='0.1.0-rc.3'
 
 class SerialWorker(threading.Thread):
     def __init__(self, port, inbox, stop):
@@ -69,9 +69,9 @@ class App:
         ttk.Button(tools,text='Export event history',command=self.export).pack(side='right')
         self.status=tk.StringVar(value='DEMO · simulated signals' if args.demo else 'Disconnected')
         ttk.Label(root,textvariable=self.status,padding=(16,6)).pack(fill='x')
-        cols=('id','status','seen','position','method','review')
+        cols=('id','status','seen','position','method','receivers','review')
         self.table=ttk.Treeview(root,columns=cols,show='headings',height=7,selectmode='browse')
-        for col,label,width in zip(cols,('Wearable','Alert / link','Last received','Coordinates','Location source','Operator'),(85,150,100,240,210,100)):
+        for col,label,width in zip(cols,('Wearable','Alert / link','Last received','Coordinates','Location source','Direct receivers','Operator'),(70,135,90,190,165,245,90)):
             self.table.heading(col,text=label);self.table.column(col,width=width)
         self.table.tag_configure('sos',background='#ffe0dc',foreground='#8c1515')
         self.table.tag_configure('stale',foreground='#846200');self.table.pack(fill='x',padx=16)
@@ -151,7 +151,7 @@ class App:
             self.status.set('Gateway heartbeat missing · alerts may not be reaching this monitor')
         selected=self.table.selection()
         for item in self.table.get_children():self.table.delete(item)
-        rows=self.store.rows();positions=[];alarm=False
+        rows=self.store.rows();positions=[];receiver_marks={};alarm=False
         for dev,active,seen,lat,lon,fixed,method,uncertainty,reviewed in rows:
             stale=now-seen>150
             label=('SOS ACTIVE' if active else 'Idle')+(' · STALE' if stale else '')
@@ -159,34 +159,64 @@ class App:
             pos=f'{lat:.6f}, {lon:.6f}' if lat is not None else 'Unknown'
             source=method if valid else ('Last known · stale' if lat is not None else 'Unknown')
             if valid and uncertainty:source+=f' ±{uncertainty:.0f} m (indicative)'
-            self.table.insert('', 'end',iid=str(dev),values=(dev,label,f'{age}s ago',pos,source,'Reviewed' if reviewed else 'Unreviewed'),tags=('sos' if active else ('stale' if stale else ''),))
+            coverage=self.store.receiver_coverage(dev,now)
+            receiver_text=', '.join(f'{ident} ({rssi:.0f} dBm)' for ident,rssi,_,_,_ in coverage)
+            for ident,rssi,heard_age,rxlat,rxlon in coverage:
+                receiver_marks[ident]=(rxlat,rxlon)
+            self.table.insert('', 'end',iid=str(dev),
+                values=(dev,label,f'{age}s ago',pos,source,receiver_text or 'No direct sightings',
+                        'Reviewed' if reviewed else 'Unreviewed'),
+                tags=('sos' if active else ('stale' if stale else ''),))
             if lat is not None:positions.append((dev,lat,lon,active,valid,uncertainty or 0))
             alarm |= bool(active and not reviewed)
         for item in selected:
             if self.table.exists(item):self.table.selection_set(item)
         if alarm and now-self.last_alarm>5:
             self.root.bell();self.last_alarm=now
-        self.plot(positions)
+        self.plot(positions,receiver_marks)
         self.root.after(500,self.tick)
 
-    def plot(self,positions):
+    def plot(self,positions,receivers=None):
+        """Show wearable estimates and surveyed receivers as distinct symbols.
+
+        A heard receiver is not the wearable's estimated location.
+        """
         c=self.canvas;c.delete('all');w,h=max(c.winfo_width(),200),max(c.winfo_height(),150)
-        if not positions:
-            c.create_text(w/2,h/2,text='No location yet\nAdd GNSS or three surveyed receiver nodes',fill='#a7c2d1',font=('Segoe UI',15),justify='center');return
-        lat0=sum(p[1] for p in positions)/len(positions);lon0=sum(p[2] for p in positions)/len(positions)
-        points=[(p,(p[2]-lon0)*111320*math.cos(math.radians(lat0)),(p[1]-lat0)*111320) for p in positions]
-        extent=max(200,max(max(abs(x),abs(y))+p[5] for p,x,y in points));scale=min(w-100,h-100)/(2*extent)
+        receivers=receivers or {}
+        if not positions and not receivers:
+            c.create_text(w/2,h/2,text='No location or recent receiver evidence\\nAdd GNSS or surveyed receiver nodes',
+                          fill='#a7c2d1',font=('Segoe UI',15),justify='center')
+            return
+        coords=[(p[1],p[2]) for p in positions]+list(receivers.values())
+        lat0=sum(p[0] for p in coords)/len(coords);lon0=sum(p[1] for p in coords)/len(coords)
+        coslat=math.cos(math.radians(lat0))
+        def projected(lat,lon):
+            return (lon-lon0)*111320*coslat,(lat-lat0)*111320
+        points=[(p,*projected(p[1],p[2])) for p in positions]
+        pins=[(ident,*projected(lat,lon)) for ident,(lat,lon) in receivers.items()]
+        extent=max([200]+[max(abs(x),abs(y))+p[5] for p,x,y in points]+
+                   [max(abs(x),abs(y)) for _,x,y in pins])
+        scale=min(w-100,h-100)/(2*extent)
         for x in range(0,w,50):c.create_line(x,0,x,h,fill='#1c3646')
         for y in range(0,h,50):c.create_line(0,y,w,y,fill='#1c3646')
-        c.create_text(18,16,anchor='nw',text=f'N ↑     center {lat0:.5f}, {lon0:.5f}     width ≈ {w/scale:.0f} m',fill='#a7c2d1')
+        caption=f'N ↑     center {lat0:.5f}, {lon0:.5f}     width ≈ {w/scale:.0f} m'
+        if pins:caption+='     Squares = surveyed receivers (NOT wearable positions)'
+        c.create_text(18,16,anchor='nw',text=caption,fill='#a7c2d1')
+        for ident,x,y in pins:
+            x=w/2+x*scale;y=h/2-y*scale
+            c.create_rectangle(x-5,y-5,x+5,y+5,fill='#5eaefa',outline='')
+            c.create_text(x+12,y,anchor='w',text=f'RX {ident}',fill='#5eaefa')
         for p,x,y in points:
             dev,lat,lon,active,valid,unc=p;x=w/2+x*scale;y=h/2-y*scale
             color='#ff6868' if active else '#58d9b6'
             if not valid:color='#8997a0'
-            if unc:
+            if unc and valid:
                 r=unc*scale;c.create_oval(x-r,y-r,x+r,y+r,outline=color,dash=(4,4))
             c.create_oval(x-6,y-6,x+6,y+6,fill=color,outline='')
             c.create_text(x+12,y,anchor='w',text=str(dev),fill=color,font=('Segoe UI',12,'bold'))
+        if not points:
+            c.create_text(w/2,h-18,text='Wearable position UNKNOWN — receiver coverage only',
+                          fill='#ffbb73',font=('Segoe UI',11,'bold'))
 
     def demo(self):
         from .simulate import packet
