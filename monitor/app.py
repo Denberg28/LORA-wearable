@@ -12,7 +12,7 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from .model import Store, load_anchors
 
-VERSION='0.1.0-rc.1'
+VERSION='0.1.0-rc.2'
 
 class SerialWorker(threading.Thread):
     def __init__(self, port, inbox, stop):

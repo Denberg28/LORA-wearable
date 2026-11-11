@@ -18,9 +18,10 @@ GPS, direct observations from >=3 surveyed non-collinear nodes for the same
 beacon -> conservative RSSI multilateration -> estimate + indicative uncertainty.
 Insufficient or unsuitable geometry -> unknown or clearly stale last-known fix.
 
-Assumptions: identical header-connected nRF52840 kit used for all roles; 3.3 V
-active-high non-latching touch module on D0; optional generic GNSS leaves D0
-free. A base is USB connected to Windows. PC storage is local and offline.
+Assumptions: identical header-connected nRF52840 kit used for all roles; default
+SOS input is the onboard active-low D0 momentary button. An optional external
+3.3 V active-high momentary touch sensor requires explicit configuration and
+wiring isolation. Optional generic GNSS leaves D0 free. A base is USB connected to Windows. PC storage is local and offline.
 
 Non-goals: RF frequency hopping, precision triangulation/TDoA, voice/text chat,
 cloud dispatch, automatic rescue notification, BLE app, waterproof certification,

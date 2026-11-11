@@ -8,6 +8,11 @@
 - Trust-on-first-use ordering cannot reject a previously unseen delayed frame.
   Shared-key peers can impersonate another network member. RF is not encrypted.
 - Gateway receipt does not prove PC persistence, operator attention or rescue.
+- Each unique wearable STATUS now qualifies for a gateway ACK (rather than a
+  shared 1.5-second throttle); acknowledgements still share bounded RF queues
+  and can be lost under sustained contention. Real multiwearable load is untested.
+- Onboard D0 button polarity verified against published schematic, not physical
+  button HIL; optional external touch wiring must be checked against D0 pull-up.
 - Bounded flood queues may drop packets under congestion, reported in health.
   No guaranteed delivery/range or validated capacity above initial HIL topology.
 - Software visual review and Windows smoke/build evidence must be distinguished

@@ -4,7 +4,15 @@
 int main() {
   lw::Frame f;f.b[0]='L';f.b[1]='W';f.b[2]=1;f.b[3]=1;f.b[10]=3;
   lw::put16(f,4,2761);lw::put16(f,6,100);lw::put16(f,8,100);lw::put32(f,12,1);lw::put32(f,16,1);
-  assert(lw::shape(f,2761));f.b[10]=4;assert(!lw::shape(f,2761));
+  assert(lw::shape(f,2761));
+  // An ACK must be queued for each unique wearable status; duplicate storms
+  // must not trigger unbounded repeat acknowledgements.
+  assert(lw::shouldAcknowledge(false,f));
+  assert(!lw::shouldAcknowledge(true,f));
+  f.b[3]=lw::ACK;assert(!lw::shouldAcknowledge(false,f));
+  f.b[3]=lw::OBSERVATION;assert(!lw::shouldAcknowledge(false,f));
+  f.b[3]=lw::STATUS;
+  f.b[10]=4;assert(!lw::shape(f,2761));
   lw::Button b;
   // Stuck active at boot is ignored until released.
   assert(!b.update(true,0));assert(!b.update(true,40));assert(!b.update(true,4000));
