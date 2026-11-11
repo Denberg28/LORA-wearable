@@ -18,7 +18,7 @@ def main():
         for path in (ROOT/'firmware'/'LoRaWearable').glob('*'):
             if path.name!='Config.h':shutil.copy2(path,stage/path.name)
         config=a.device_config.read_text() if a.device_config else (stage/'Config.example.h').read_text().replace('DEVICE_ROLE 1',f'DEVICE_ROLE {role}').replace('DEVICE_ID 100',f'DEVICE_ID {ident}')
-        if name=='storage-init':config=config.replace('INITIALIZE_NEW_STORAGE false','INITIALIZE_NEW_STORAGE true')
+        if not a.device_config and name=='storage-init':config=config.replace('INITIALIZE_NEW_STORAGE false','INITIALIZE_NEW_STORAGE true')
         (stage/'Config.h').write_text(config)
         cmd=[a.cli]
         if a.config_file:cmd+=['--config-file',a.config_file]
