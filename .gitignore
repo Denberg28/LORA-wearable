@@ -1,0 +1,10 @@
+firmware/LoRaWearable/Config.h
+private/
+build/
+dist/
+*.sqlite3*
+*.csv
+__pycache__/
+*.pyc
+.venv/
+*.spec

@@ -122,4 +122,8 @@ Report concisely: what changed/why; version/commit/artifact; checks/results; unt
 
 ## LORA wearable project
 
-Arduino IDE firmware and Windows monitor. No stable promotion without HIL.
+Use firmware/LoRaWearable for every role; protocol v1 is shared with monitor.
+Compile wearable, relay and base with scripts/build_firmware.py. Never claim RSSI
+location is GPS or precision triangulation. No stable promotion without HIL.
+Radio must remain disabled with unprovisioned key or unconfirmed region.
+Do not publish personal coordinates, network keys or event databases.
