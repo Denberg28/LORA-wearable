@@ -24,6 +24,18 @@ def main():
         while time.monotonic()<end:
             root.update();time.sleep(.01)
         assert a.store.rows()[0][1]==0
+        # With a single direct receiver, report coverage but no wearable location.
+        a.store.anchors={'10':{'lat':13.58,'lon':123.28}}
+        a.inbox.put(('line',packet(origin=101,boot=1,seq=1,lat=None,lon=None)))
+        a.inbox.put(('line',packet(origin=10,boot=1,seq=1,kind=3,target=101,
+                                    ref_boot=1,ref_seq=1,rssi=-75)))
+        end=time.monotonic()+.7
+        while time.monotonic()<end:
+            root.update();time.sleep(.01)
+        assert a.table.exists('101')
+        cells=a.table.item('101')['values']
+        assert cells[3]=='Unknown', f'Invented wearable coordinates: {cells}'
+        assert '10 (-75 dBm)' in cells[5], f'Missing direct hearing: {cells}'
         root.update()
         try:
             from PIL import ImageGrab
