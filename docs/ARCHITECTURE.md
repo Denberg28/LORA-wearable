@@ -32,6 +32,12 @@ allowlisted anchor coordinates, not packet-supplied coordinates. Relays measure
 RSSI only where origin==last sender; forwarded signal strength never becomes an
 observation of the wearable. Observation-before-status arrival is supported.
 Recent GPS wins over RSSI. Samples from different beacons never mix.
+The Windows monitor also provides exact-beacon direct receiver sightings as a
+coverage-only fallback. It queries the current wearable generation/sequence
+and shows each allowlisted surveyed receiver's ID and direct RSSI, never a
+fabricated wearable coordinate, range, or bearing. Receiver plots use square
+symbols distinct from wearable estimate circles. Observations >30 s old,
+for different beacons, or from untrusted/unsurveyed receivers are omitted.
 
 ## State and authority
 
