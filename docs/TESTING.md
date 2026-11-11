@@ -47,6 +47,16 @@ Python's OS CSPRNG, not Crypto RNG or Arduino `random`; Arduino `random` provide
 collision jitter only. TinyGPSCustom is not used. GNSS parsing still needs HIL.
 These warnings are retained, not disabled to force a green build.
 
+## Revision 0.1.0-rc.2 verification additions
+
+Source-level changes: default D0 button polarity matches the published Wio-SX1262
+V1.0 schematic; gateway acknowledges each unique wearable status independently
+instead of using a global 1.5 s timer. Native regression checks cover duplicate
+STATUS and non-STATUS ACK suppression. These are design/code-review findings;
+real button voltage, 100-trial multiwearable delivery and congested RF behavior
+remain **BLOCKED** until measured in HIL. CI must rerun all gates on the final
+commit; prior 0.1.0-rc.1 evidence is not transferable without verification.
+
 ## Release criteria
 
 The workflow runs source checks, native/Python tests, all3 real MCU builds,
