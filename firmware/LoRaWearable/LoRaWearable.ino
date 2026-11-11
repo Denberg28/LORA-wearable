@@ -6,10 +6,14 @@
 #include <Adafruit_LittleFS.h>
 #include <InternalFileSystem.h>
 #include "Protocol.h"
+#include "StateStorage.h"
 #if __has_include("Config.h")
 #include "Config.h"
 #else
 #include "Config.example.h"
+#endif
+#ifndef INITIALIZE_NEW_STORAGE
+#define INITIALIZE_NEW_STORAGE false
 #endif
 using namespace Adafruit_LittleFS_Namespace;
 using namespace lw;
@@ -22,14 +26,12 @@ bool ready=false,active=false,delivered=false,pending=false;
 uint32_t bootNumber=0,sequence=0,lastStatus=0,lastTx=0,lastHealth=0;
 uint32_t dropped=0,badPackets=0,txErrors=0;
 uint8_t stateSlot=0;
-struct Saved { uint32_t magic,boot,active,check; };
 struct Outgoing { Frame frame;uint32_t due;bool used=false; } queue[12];
 Seen seen[48];uint8_t seenIndex=0;
 Frame lastPacket;
 void irq() {received=true;}
 void led(uint8_t pin,bool on) {digitalWrite(pin,on?LOW:HIGH);}
 void fail(const char* reason) {ready=false;led(LED_RED,true);Serial.print("{\"type\":\"fault\",\"reason\":\"");Serial.print(reason);Serial.println("\"}");}
-uint32_t checksum(const Saved& s) {return s.magic ^ s.boot ^ s.active ^ 0x57329adc;}
 bool saveState(uint32_t n,bool sos) {
   Saved s{0x4c575331,n,uint32_t(sos),0};s.check=checksum(s);
   const char* path=stateSlot?"/lw1":"/lw0";
@@ -41,7 +43,7 @@ bool saveState(uint32_t n,bool sos) {
   stateSlot^=1;return true;
 }
 bool loadState() {
-  if(!InternalFS.begin())return false;
+  if(!mountExisting<Adafruit_LittleFS>(InternalFS))return false;
   Saved best{};bool found=false;
   for(uint8_t i=0;i<2;i++) {
     const char* path=i?"/lw1":"/lw0";
@@ -49,10 +51,10 @@ bool loadState() {
     File f(InternalFS);Saved s{};if(!f.open(path,FILE_O_READ))return false;
     size_t n=f.read((uint8_t*)&s,sizeof(s));f.close();
     // Refuse corrupted storage rather than silently roll back a counter/SOS.
-    if(n!=sizeof(s)||s.magic!=0x4c575331||s.active>1||s.check!=checksum(s))return false;
+    if(n!=sizeof(s)||!validSaved(s))return false;
     if(!found||s.boot>=best.boot) {best=s;stateSlot=i^1;found=true;}
   }
-  if(best.boot==UINT32_MAX)return false;
+  if(!found||best.boot==UINT32_MAX)return false;
   bootNumber=best.boot+1;active=best.active;
   return saveState(bootNumber,active);
 }
@@ -118,6 +120,8 @@ void setup() {
   Serial.begin(115200); // Do not wait for USB; wearables must run on battery.
   const uint8_t leds[]={LED_RED,LED_GREEN,LED_BLUE};
   for(uint8_t p:leds) {pinMode(p,OUTPUT);led(p,false);}
+  // Separate, intentionally flashed commissioning image. No radio starts here.
+  if(INITIALIZE_NEW_STORAGE) {Serial.println("{\"type\":\"setup\",\"command\":\"INITIALIZE NEW DEVICE\"}");return;}
   pinMode(D0,TOUCH_ACTIVE_HIGH?INPUT_PULLDOWN:INPUT_PULLUP);
   if(!REGION_CONFIRMED||!KEY_PROVISIONED) {fail("provision_key_and_region");return;}
   uint8_t nonzero=0;for(uint8_t k:NETWORK_KEY)nonzero|=k;
@@ -137,6 +141,28 @@ void setup() {
 void loop() {
   NRF_WDT->RR[0]=0x6e524635;
   uint32_t now=millis();
+  if(INITIALIZE_NEW_STORAGE) {
+    // Deliberate one-time setup only; never use to recover a commissioned ID.
+    static char command[32];static uint8_t length=0;static bool overflow=false,done=false;
+    while(Serial.available()) {
+      char ch=Serial.read();
+      if(ch=='\r')continue;
+      if(ch=='\n') {
+        command[length]=0;
+        if(!done && !overflow && !strcmp(command,"INITIALIZE NEW DEVICE")) {
+          bool mounted=mountExisting<Adafruit_LittleFS>(InternalFS);
+          if(mounted && (InternalFS.exists("/lw0")||InternalFS.exists("/lw1")))
+            Serial.println("{\"type\":\"fault\",\"reason\":\"existing_state_refused\"}");
+          else if((mounted||InternalFS.begin()) && saveState(0,false)) {
+            done=true;Serial.println("{\"type\":\"setup\",\"result\":\"initialized_upload_normal_firmware\"}");
+          } else Serial.println("{\"type\":\"fault\",\"reason\":\"initialize_failed\"}");
+        }
+        length=0;overflow=false;
+      } else if(length<sizeof(command)-1)command[length++]=ch;
+      else overflow=true;
+    }
+    led(LED_GREEN,done);led(LED_BLUE,!done&&(now/500)%2);delay(2);return;
+  }
   if(GNSS_ENABLED) {uint16_t budget=128;while(Serial1.available()&&budget--)gps.encode(Serial1.read());}
   if(!ready) {led(LED_RED,(now/150)%2);delay(5);return;}
   if(DEVICE_ROLE==1 && touch.update(digitalRead(D0)==(TOUCH_ACTIVE_HIGH?HIGH:LOW),now)) {
@@ -157,6 +183,13 @@ void loop() {
     Frame f=q.frame;q.used=false;
     int16_t e=radio.transmit(f.b,SIZE);lastTx=millis();received=false;
     if(e!=RADIOLIB_ERR_NONE)txErrors++;
+    if(DEVICE_ROLE==1 && Serial) {
+      Serial.print("{\"type\":\"tx\",\"device\":");Serial.print(DEVICE_ID);
+      Serial.print(",\"boot\":");Serial.print(u32(f,12));Serial.print(",\"seq\":");Serial.print(u32(f,16));
+      Serial.print(",\"active\":");Serial.print((f.b[11]&1)?1:0);
+      Serial.print(",\"ok\":");Serial.print(e==RADIOLIB_ERR_NONE?1:0);
+      Serial.print(",\"uptime_ms\":");Serial.print(lastTx);Serial.println("}");
+    }
     if(radio.startReceive()!=RADIOLIB_ERR_NONE)fail("radio_receive");
     break;
   }
@@ -171,3 +204,4 @@ void loop() {
   } else led(LED_GREEN,(now/1000)%2);
   delay(2);
 }
+

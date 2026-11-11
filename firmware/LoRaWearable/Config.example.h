@@ -8,9 +8,11 @@
 #define RADIO_MHZ 915.0f // configurable; not a claim of local authorization
 #define RADIO_DBM 10
 #define KEY_PROVISIONED false
+#define INITIALIZE_NEW_STORAGE false // Maintenance image ONLY; see docs/STORAGE.md
 static const uint8_t NETWORK_KEY[32] = {0};
 #define TOUCH_ACTIVE_HIGH false // Kit's D0 onboard pushbutton pulls LOW; set true for external active-high touch output
 #define GNSS_ENABLED false // external UART GNSS, TX -> D7, GND common
 #define ANCHOR_VALID false
 #define ANCHOR_LAT_E7 0
 #define ANCHOR_LON_E7 0
+

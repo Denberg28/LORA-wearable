@@ -68,9 +68,35 @@ no invented position, different beacon, and expiration. GitHub CI must verify
 Windows UI + firmware + packaging for the exact merge commit. Real RF RSSI,
 actual receiver footprint and accuracy remain **BLOCKED** pending HIL.
 
+## Revision 0.1.0-rc.4 verification additions
+
+Baseline for this change: rc.3 main `91d2c1e77831eff0447b5cd3f1b78676a00188fd`.
+Local Python 3.12.14 checks pass: 19 unit tests including field calibration,
+missed-trial denominators, site leakage, exact-beacon capture/dedup/expiry,
+nonfinite input, model change invalidation and exclusive capture creation.
+Native GCC warnings-as-errors checks pass for protocol/button lifecycle and
+the mount-only dispatch helper (mount failure never calls a derived eraser).
+These do not emulate physical flash or prove power-cut behavior.
+
+`python -m tests.location_benchmark` evaluates 100 synthetic held-out beacons
+per scenario with fixed seed 20261111. Results are retained in
+`docs/evidence/rc4-synthetic-location.json`. Ideal and 3 dB noise meet the
+coarse reference targets; 6 dB noise, 15 dB body shadow and one-receiver loss
+fail. Two remaining receivers never yield a position. Negative results are
+expected evidence of the RSSI method's limits, not disabled test failures.
+
+The final exact-commit CI must compile wearable, relay, base and `storage-init`
+against the pinned real BSP; run 19 Python tests, native checks and actual
+Windows Tk smoke; then build/smoke the Windows executable and package the same
+source commit. GUI smoke additionally verifies field recording and continued
+SOS ingestion after optional capture I/O failure. This environment has no
+Arduino toolchain, Windows desktop or connected radios: those CI and physical
+gates cannot be inferred from the local unit results. Hardware storage,
+communication and field accuracy remain BLOCKED per STORAGE.md/HIL.md.
+
 ## Release criteria
 
-The workflow runs source checks, native/Python tests, all3 real MCU builds,
+The workflow runs source checks, native/Python tests, all three operational MCU builds plus the storage initializer,
 Windows tests, GUI smoke and executable packaging. Candidate publishing depends
 on all jobs passing, permits only `-rc.` versions, and refuses to replace any
 existing release. Hardware-blocked status is in the package manifest and notes.
@@ -79,3 +105,4 @@ final source/config, including measured link, watchdog and endurance results.
 
 No known critical/high defect may ship at either tier. Missing hardware evidence
 is not a passing test. A CI green build does not establish rescue readiness.
+

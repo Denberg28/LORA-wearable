@@ -1,6 +1,6 @@
 # LORA wearable
 
-**0.1.0-rc.3 · TEST CANDIDATE · hardware validation BLOCKED**
+**0.1.0-rc.4 · TEST CANDIDATE · hardware validation BLOCKED**
 
 Custom Arduino firmware for the **Seeed XIAO nRF52840 + header-connected
 Wio-SX1262 kit**, and an offline Windows emergency monitor. Hold a small touch
@@ -15,6 +15,9 @@ which receiver heard the latest beacon, its RSSI, and its surveyed site;
 This is a controlled-validation prototype, not a validated emergency service.
 No range, battery endurance, delivery rate or real location accuracy has been
 measured. See [hardware validation](docs/HIL.md) before operational use.
+
+**Upgrade notice:** rc.1–rc.3 could auto-erase persistent state on a filesystem
+mount failure. Use rc.4; see [new-device commissioning and storage recovery](docs/STORAGE.md).
 
 ## Hardware
 
@@ -67,7 +70,8 @@ event records are personal data; the project does not upload them.
    (`Seeeduino:nrf52:xiaonRF52840`). Use the non-mbed BSP.
 3. Library Manager: **RadioLib 7.3.0**, **Crypto 0.4.0** by Rhys Weatherley,
    **TinyGPSPlus 1.0.3**. LittleFS and TinyUSB are supplied by the BSP.
-4. Open `firmware/LoRaWearable/LoRaWearable.ino`.
+4. Commission a **new device** once using [STORAGE.md](docs/STORAGE.md), then
+   open `firmware/LoRaWearable/LoRaWearable.ino` for normal firmware.
 5. Create private deployment settings below. Copy the chosen device's `.h` to
    `firmware/LoRaWearable/Config.h`, then Verify and Upload to that device's port.
    Repeat with each device's unique configuration. Close the monitor before
@@ -98,8 +102,11 @@ allowlist (real survey values only):
 ```
 
 These numbers are illustrative, not installation locations. RSSI is affected by
-body shielding, buildings, antenna orientation and multipath. The first release
-uses an assumed -40 dBm at 1 m and path-loss exponent 2.7. Indicative uncertainty
+body shielding, buildings, antenna orientation and multipath. Without a field profile it
+uses an assumed -40 dBm at 1 m and path-loss exponent 2.7. Per-receiver field
+calibration and held-out evaluation are now supported through the
+[field tools](docs/FIELD_VALIDATION.md). Use **Load receivers** and **Record
+field session** in the monitor to prepare that evidence. Indicative uncertainty
 is **not a statistical confidence radius**; field calibration remains required.
 Degenerate geometry and inconsistent solutions produce unknown/last-known location.
 For a new beacon heard by fewer than three surveyed receivers, the monitor
@@ -125,7 +132,8 @@ python -m unittest discover -s tests -v
 g++ -std=c++11 -Wall -Wextra -Werror tests/protocol_test.cpp -o build/protocol-test
 ```
 
-The first build compiles all roles into `build/firmware/`. The private-config
+The first build compiles all three roles plus the radio-free `storage-init`
+maintenance image into `build/firmware/`. The private-config
 build compiles that one configured device. Do not distribute provisioned images:
 firmware contains the network secret. Monitor source requires only pyserial;
 its UI uses Python's Tk and SQLite standard libraries.
@@ -157,7 +165,8 @@ its UI uses Python's Tk and SQLite standard libraries.
 
 ## Delivery, upgrade and rollback
 
-See [specification](docs/SPEC.md), [architecture](docs/ARCHITECTURE.md),
+See [development checkpoint](docs/PROGRESS.md),
+[field calibration/evaluation](docs/FIELD_VALIDATION.md), [specification](docs/SPEC.md), [architecture](docs/ARCHITECTURE.md),
 [test evidence](docs/TESTING.md), [HIL procedure](docs/HIL.md),
 [known issues](docs/KNOWN_ISSUES.md) and [changelog](CHANGELOG.md).
 Release packages include a commit manifest and SHA-256 checksums. Upgrade all
@@ -172,3 +181,4 @@ Hardware sources:
 [XIAO BSP guide](https://wiki.seeedstudio.com/XIAO_BLE/),
 [kit pin definitions](https://github.com/meshtastic/firmware/blob/develop/variants/nrf52840/seeed_xiao_nrf52840_kit/variant.h),
 [RadioLib](https://github.com/jgromes/RadioLib/tree/7.3.0).
+

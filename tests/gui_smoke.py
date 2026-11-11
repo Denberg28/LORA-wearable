@@ -5,11 +5,14 @@ import tkinter as tk
 import time
 from pathlib import Path
 from monitor.app import App
+from monitor.field import CaptureWriter
 from monitor.simulate import packet
 
 def main():
     with tempfile.TemporaryDirectory() as d:
         root=tk.Tk();a=App(root,argparse.Namespace(data=d,network=2761,anchors=None,demo=False))
+        capture_path=Path(d)/'session.jsonl'
+        a.capture=CaptureWriter(capture_path)
         a.inbox.put(('line',packet(lat=13.58,lon=123.28)))
         end=time.monotonic()+1.3
         while time.monotonic()<end:
@@ -43,7 +46,20 @@ def main():
             x,y=root.winfo_rootx(),root.winfo_rooty()
             ImageGrab.grab(bbox=(x,y,x+root.winfo_width(),y+root.winfo_height())).save('build/monitor-smoke.png')
         except (ImportError,OSError):pass
+        a.record() # Stops recording; no dialog when a capture already exists.
+        assert '"type": "serial"' in capture_path.read_text()
+        class FailedCapture:
+            def append(self,event):raise OSError('simulated capture disk failure')
+            def close(self):raise OSError('simulated capture close failure')
+        a.capture=FailedCapture()
+        a.inbox.put(('line',packet(origin=102,seq=1)))
+        end=time.monotonic()+.7
+        while time.monotonic()<end:
+            root.update();time.sleep(.01)
+        assert a.table.exists('102'), 'Optional capture failure suppressed an SOS'
+        assert a.capture is None
         a.close()
     print('PASS actual Tk startup, packet display, review, cancel and shutdown')
 
 if __name__=='__main__':main()
+

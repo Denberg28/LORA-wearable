@@ -69,3 +69,16 @@ source/config hashes, evidence paths and tester identity in `docs/HIL_RESULTS.md
 User-run tests count only with those observations. Stop stable promotion on any
 failed required criterion. A failed physical core flow must be fixed before a
 new candidate; missing equipment alone permits this explicitly labeled candidate.
+
+
+## rc.4 additional mandatory checks
+
+Commission only new devices using STORAGE.md. Verify readable state refuses
+reinitialization, normal firmware faults on blank/unmountable/corrupt state
+without erasing it, and repeated power cuts during active/cancel writes never
+silently restore idle or roll counters backward. Existing valid rc.3 state must
+upgrade without initialization. Record exact board/BSP/build/config and raw logs.
+
+Use FIELD_VALIDATION.md to collect every expected beacon and independent survey
+labels. Test body orientation, wet conditions, receiver outage and obstacles.
+Retain failed trials; meeting a synthetic target does not satisfy this gate.

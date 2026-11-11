@@ -18,7 +18,7 @@ inline bool shape(const Frame& f, uint16_t net) {
     int32_t lat=int32_t(u32(f,30)),lon=int32_t(u32(f,34));
     if(lat < -900000000 || lat > 900000000 || lon < -1800000000 || lon > 1800000000 || u16(f,38)>30) return false;
   }
-  if(f.b[3]!=STATUS && (!u16(f,20)||!u32(f,22)||!u32(f,26))) return false;
+  if(f.b[3]!=STATUS && (!u16(f,20)||u16(f,20)==65535||!u32(f,22)||!u32(f,26))) return false;
   return true;
 }
 struct Button {
@@ -43,3 +43,4 @@ inline bool same(const Seen& s,const Frame& f) { return s.origin==u16(f,6)&&s.bo
 // wearables; a global ACK throttle can starve devices transmitting in bursts.
 inline bool shouldAcknowledge(bool duplicate, const Frame& f) { return !duplicate && f.b[3]==STATUS; }
 }
+

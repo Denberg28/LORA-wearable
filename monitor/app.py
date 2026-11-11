@@ -11,8 +11,9 @@ import time
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from .model import Store, load_anchors
+from .field import CaptureWriter
 
-VERSION='0.1.0-rc.3'
+VERSION='0.1.0-rc.4'
 
 class SerialWorker(threading.Thread):
     def __init__(self, port, inbox, stop):
@@ -56,6 +57,7 @@ class App:
         self.inbox=queue.Queue(maxsize=1024);self.worker=None;self.stop=threading.Event()
         self.last_health=0;self.last_alarm=0;self.connected=False;self.rejected=0
         self.error_state=None
+        self.capture=None
         root.title(f'LORA wearable · {VERSION}');root.geometry('1100x720');root.minsize(860,580)
         style=ttk.Style();style.theme_use('clam');style.configure('Treeview',rowheight=30)
         top=ttk.Frame(root,padding=16);top.pack(fill='x')
@@ -66,6 +68,9 @@ class App:
         self.ports.pack(side='left');ttk.Button(tools,text='Refresh ports',command=self.refresh_ports).pack(side='left',padx=4)
         self.connect_button=ttk.Button(tools,text='Connect',command=self.toggle);self.connect_button.pack(side='left')
         ttk.Button(tools,text='Review selected alert',command=self.review).pack(side='left',padx=8)
+        ttk.Button(tools,text='Load receivers',command=self.load_receivers).pack(side='left')
+        self.record_button=ttk.Button(tools,text='Record field session',command=self.record)
+        self.record_button.pack(side='left',padx=4)
         ttk.Button(tools,text='Export event history',command=self.export).pack(side='right')
         self.status=tk.StringVar(value='DEMO · simulated signals' if args.demo else 'Disconnected')
         ttk.Label(root,textvariable=self.status,padding=(16,6)).pack(fill='x')
@@ -108,6 +113,28 @@ class App:
         if chosen:
             self.store.review(int(chosen[0]))
 
+    def load_receivers(self):
+        target=filedialog.askopenfilename(filetypes=[('Receiver survey/profile','*.json')])
+        if target:
+            try:
+                self.store.configure_anchors(load_anchors(Path(target)))
+                self.status.set(f'Loaded {len(self.store.anchors)} surveyed receivers; awaiting new observations')
+            except (OSError,ValueError,KeyError,TypeError) as e:
+                messagebox.showerror('Receiver setup failed',str(e))
+
+    def record(self):
+        try:
+            if self.capture:
+                capture=self.capture;self.capture=None;capture.close()
+            else:
+                if self.args.demo:
+                    messagebox.showinfo('Field capture','Use a live gateway connection to record field evidence');return
+                target=filedialog.asksaveasfilename(defaultextension='.jsonl',initialfile='lora-field-session.jsonl')
+                if target:self.capture=CaptureWriter(target,self.args.network)
+        except OSError as e:
+            messagebox.showerror('Field capture failed',str(e))
+        self.record_button.config(text='Stop recording' if self.capture else 'Record field session')
+
     def export(self):
         target=filedialog.asksaveasfilename(defaultextension='.csv',initialfile='lora-events.csv')
         if target:
@@ -130,6 +157,14 @@ class App:
             else:
                 try:
                     data=json.loads(line)
+                    if self.capture:
+                        try:self.capture.append(data)
+                        except OSError:
+                            # Optional evidence recording must not suppress live alerts.
+                            capture=self.capture;self.capture=None
+                            try:capture.close()
+                            except OSError:pass
+                            self.record_button.config(text='Capture failed · retry')
                     if data.get('type')=='health':
                         self.error_state=None
                         self.last_health=now
@@ -227,6 +262,9 @@ class App:
     def close(self):
         self.stop.set()
         if self.worker:self.worker.join(timeout=1)
+        if self.capture:
+            try:self.capture.close()
+            except OSError:pass
         self.store.db.close();self.root.destroy()
 
 def main():
@@ -244,3 +282,4 @@ def main():
     root.mainloop()
 
 if __name__=='__main__':main()
+
