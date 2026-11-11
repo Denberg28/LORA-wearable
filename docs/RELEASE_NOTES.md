@@ -1,4 +1,8 @@
-Initial LORA wearable controlled-validation candidate.
+LORA wearable 0.1.0-rc.2 controlled-validation candidate.
+
+Changes from rc.1: default onboard active-low SOS button; per-unique-status
+gateway ACK scheduling (no global multiwearable throttle), native ACK
+regression checks. External active-high touch modules require explicit setup.
 
 - Arduino IDE sketch for wearable, relay and USB base using XIAO nRF52840 + Wio-SX1262 header kit.
 - Three-second touch SOS/cancel, persistent state, authenticated bounded multi-hop communication and gateway receipts.
