@@ -16,7 +16,8 @@ measured. See [hardware validation](docs/HIL.md) before operational use.
 ## Hardware
 
 Minimum: one wearable kit, one base kit, two compatible antennas, a Windows PC,
-and a 3.3 V momentary digital touch sensor (active high by default). Add relay
+and the kit's onboard momentary SOS button (active low on D0). An optional
+3.3 V capacitive touch sensor is supported with explicit polarity/wiring checks. Add relay
 kits to extend coverage. For location without GPS, use **at least three
 non-collinear surveyed receivers hearing the wearable directly**, normally
 three relay kits in addition to the base. More hops alone cannot locate a device.
@@ -129,6 +130,8 @@ its UI uses Python's Tk and SQLite standard libraries.
   **the gateway received a packet**, not that the PC saved it or a rescuer saw it.
 - Retransmit with a new sequence after 10 s while awaiting receipt; once received,
   active status every 30 s, idle every 60 s. No maximum delivery time is guaranteed.
+- The gateway queues a receipt for each new wearable status (not a shared
+  multi-device timer). RF collisions and full queues can still delay receipts.
 - Relays forward each unique packet once, at most three relay hops, with jitter,
   bounded caches/queues and visible drop counters. Same-channel flooding is used.
   **Frequency-hopping spread spectrum is not implemented.**
