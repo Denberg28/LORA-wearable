@@ -14,7 +14,7 @@ def main():
     tracked=subprocess.check_output(['git','ls-files','-z'],cwd=ROOT).decode().split('\0')
     sources=[ROOT/p for p in tracked if p and not p.startswith('.github/')]
     binary=list((ROOT/'build'/'firmware').glob('*/*'))
-    required={'base','wearable','relay'}
+    required={'base','wearable','relay','storage-init'}
     if {p.parent.name for p in binary if p.suffix=='.hex'}!=required:
         raise SystemExit('Required real firmware builds missing')
     if any((ROOT/'build'/'sketches').rglob('Config.h')):
@@ -36,3 +36,4 @@ def main():
     print(target)
 
 if __name__=='__main__':main()
+

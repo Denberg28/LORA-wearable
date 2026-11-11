@@ -10,7 +10,7 @@ def main():
     p.add_argument('--cli',default='arduino-cli');p.add_argument('--config-file')
     p.add_argument('--device-config',type=Path,help='private Config.h; compiles one provisioned target')
     a=p.parse_args()
-    for role,name,ident in [(1,'wearable',100),(2,'relay',10),(3,'base',1)]:
+    for role,name,ident in [(1,'wearable',100),(2,'relay',10),(3,'base',1),(1,'storage-init',100)]:
         if a.device_config and role!=1:break
         name=a.device_config.stem if a.device_config else name
         stage=ROOT/'build'/'sketches'/name/'LoRaWearable'
@@ -18,6 +18,7 @@ def main():
         for path in (ROOT/'firmware'/'LoRaWearable').glob('*'):
             if path.name!='Config.h':shutil.copy2(path,stage/path.name)
         config=a.device_config.read_text() if a.device_config else (stage/'Config.example.h').read_text().replace('DEVICE_ROLE 1',f'DEVICE_ROLE {role}').replace('DEVICE_ID 100',f'DEVICE_ID {ident}')
+        if not a.device_config and name=='storage-init':config=config.replace('INITIALIZE_NEW_STORAGE false','INITIALIZE_NEW_STORAGE true')
         (stage/'Config.h').write_text(config)
         cmd=[a.cli]
         if a.config_file:cmd+=['--config-file',a.config_file]
@@ -25,3 +26,4 @@ def main():
         subprocess.run(cmd,check=True)
 
 if __name__=='__main__':main()
+

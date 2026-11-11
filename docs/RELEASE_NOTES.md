@@ -1,22 +1,28 @@
-LORA wearable 0.1.0-rc.3 controlled-validation candidate.
+# LORA wearable 0.1.0-rc.4 — TEST CANDIDATE
 
-Changes from rc.2: the Windows monitor now reports which surveyed direct
-receivers heard the latest wearable beacon, even without enough evidence to
-estimate a wearable position. Receiver sites are plotted as distinct squares.
-These are coverage references, **not** range, bearing, triangulation, or proof
-of a wearable's location. Simulated freshness/provenance tests added.
+Supersedes rc.1–rc.3: their normal BSP filesystem startup can auto-erase state
+on mount failure. rc.4 preserves failed storage and requires deliberate new-device
+commissioning. See docs/STORAGE.md before first use or upgrade. Existing valid
+state remains compatible; never initialize an enrolled identity or downgrade
+to bypass a fault.
 
-Changes from rc.1: default onboard active-low SOS button; per-unique-status
-gateway ACK scheduling (no global multiwearable throttle), native ACK
-regression checks. External active-high touch modules require explicit setup.
+Adds per-receiver RSSI calibration, bounded dB-space fitting, field session
+recording/receiver loading in the Windows UI, exact-beacon CSV export and held-out
+location evaluation. Misses remain in the availability denominator; training and
+evaluation sites cannot overlap. Synthetic/failed evaluations cannot produce
+a deployment profile. Late receiver reports cannot refresh an old position.
 
-- Arduino IDE sketch for wearable, relay and USB base using XIAO nRF52840 + Wio-SX1262 header kit.
-- Three-second touch SOS/cancel, persistent state, authenticated bounded multi-hop communication and gateway receipts.
-- Windows offline monitor: SOS alerts, local review/history, stale links, optional GPS and coarse RSSI location estimates.
-- Source, disabled-radio reference firmware, Windows application, manifest and checksums included.
+Automated candidate checks include all three firmware roles plus the radio-free
+storage initializer, Python/native behavior, Windows UI and executable packaging.
+The source archive contains an exact commit manifest; SHA256SUMS covers both ZIPs.
+Public operational images remain radio-disabled; privately provision and compile.
 
-**HIL and field validation BLOCKED. Not a stable or operationally validated emergency device.**
+**Hardware/field validation remains BLOCKED.** No connected radio, flash power-cut,
+touch, battery, USB delivery or real location result was measured. Synthetic
+6 dB noise, 15 dB body shadow and one-receiver loss fail coarse location targets;
+ideal/3 dB simulations are not field accuracy evidence. This is a controlled
+validation candidate, not a validated emergency service or stable release.
 
-Public firmware cannot transmit: provision a private key and permitted radio settings, then build/upload through Arduino IDE. GPS requires an external module. RSSI location needs three or more surveyed receivers hearing the wearable directly, and remains uncalibrated. Frequency hopping is not implemented. Gateway receipt is not human rescue confirmation.
-
-Read README.md, docs/HARDWARE.md and docs/HIL.md before testing. Back up private configuration and PC data before upgrades. There is no prior known-good project release; remove this candidate or restore your independently backed-up factory firmware to roll back. Never replace private keys/counters casually.
+See docs/PROGRESS.md, docs/FIELD_VALIDATION.md, docs/TESTING.md and docs/HIL.md.
+Back up private configs and PC data. Prefer correction/re-enrollment to rollback
+when persistent state fails; previous releases contain the storage defect.

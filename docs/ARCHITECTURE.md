@@ -44,6 +44,9 @@ for different beacons, or from untrusted/unsurveyed receivers are omitted.
 Only a deliberate local input changes wearable SOS. There is no actuator,
 motor output, arming or competing control authority; these controls are N/A.
 Two alternating LittleFS records hold generation and SOS with integrity checks.
+Normal mounting explicitly bypasses the BSP auto-formatting override; missing
+or corrupt state disables RF. New-device commissioning is a separate
+radio-free build requiring exact USB confirmation (STORAGE.md).
 Every boot/state transition advances generation. Writes are read back before
 transmission. Any invalid record or exhausted counter causes a visible fault
 and disabled RF. State transition writes never depend on PC/USB availability.
@@ -88,3 +91,19 @@ reconnect. UI consumes up to100 events/tick, keeps SQLite work on UI thread,
 and surfaces errors. Observations expire after60 s, location uses <=30 s samples.
 Event history intentionally persists to local disk; storage errors stop transport.
 No cloud telemetry, downloaded maps, shell execution or network listeners.
+
+
+## Location calibration and field evidence
+
+The bounded solver fits residual RSSI in dB space using optional receiver-specific
+log-distance profiles. Geometric degeneracy, nonfinite input and inconsistent
+measurements return unknown; default propagation remains uncalibrated. An RSSI
+fix is timed to its status reception, never refreshed by late observations.
+Survey/model fingerprints invalidate derived RSSI positions and observations on
+change; GPS, SOS, ordering and history remain intact.
+
+Local session capture preserves received packets/diagnostics for exact-beacon
+labeling against independently surveyed wearer positions. Calibration uses
+training-site medians and separate evaluation sites, counting absent receptions.
+Synthetic/failed evaluations cannot write a deployable profile. PC timestamps
+are not TDOA measurements. See FIELD_VALIDATION.md for the format and limits.

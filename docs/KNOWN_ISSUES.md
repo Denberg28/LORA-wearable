@@ -1,7 +1,10 @@
 # Limitations and validation blockers
 
+- rc.1–rc.3 are superseded: their BSP filesystem startup can erase saved state on mount failure. Use rc.4 and STORAGE.md. Never downgrade to bypass a persistence fault.
+- Synthetic 6 dB noise, 15 dB body shadow and one-of-four receiver loss fail the coarse location targets; RSSI operational usefulness remains unproven. See FIELD_VALIDATION.md.
+
 - HIL/field/real Windows USB validation is BLOCKED; no emergency-readiness claim.
-- RSSI location is a model-based estimate with assumed calibration; no real
+- RSSI location is a model-based estimate with assumed defaults or an optional per-receiver field profile; no real
   accuracy demonstrated. This is ranging/multilateration, not angular triangulation.
 - Receiver coverage fallback identifies surveyed receiver sites and current
   direct-hearing RSSI only; it does not provide distance, direction, or wearer
@@ -25,3 +28,4 @@
 
 No known critical/high implementation defect is accepted for candidate delivery.
 Missing hardware verification is recorded separately from defect severity.
+

@@ -1,0 +1,133 @@
+{
+  "evidence": "SIMULATOR TESTED ONLY",
+  "seed": 20261111,
+  "python": "3.12.14",
+  "cases": {
+    "ideal": {
+      "data_kind": "synthetic",
+      "evidence": "SIMULATOR TESTED",
+      "training_points": 8,
+      "heldout_points": 100,
+      "expected_beacons": 100,
+      "located_beacons": 100,
+      "availability": 1.0,
+      "median_error_m": 0.10840276198466661,
+      "p95_error_m": 0.4110645521109169,
+      "max_error_m": 0.5050405413800472,
+      "outside_indicative_radius": 0,
+      "extrapolated_beacons": 0,
+      "reference_targets": {
+        "availability": 0.9,
+        "median_error_m": 100,
+        "p95_error_m": 250
+      },
+      "reference_gate": "PASS",
+      "warning": "Targets are prototype engineering criteria, not guaranteed accuracy. Indicative radii are not confidence bounds."
+    },
+    "noise_3db": {
+      "data_kind": "synthetic",
+      "evidence": "SIMULATOR TESTED",
+      "training_points": 8,
+      "heldout_points": 100,
+      "expected_beacons": 100,
+      "located_beacons": 100,
+      "availability": 1.0,
+      "median_error_m": 85.21722949974587,
+      "p95_error_m": 239.1771175993081,
+      "max_error_m": 355.44052189207224,
+      "outside_indicative_radius": 0,
+      "extrapolated_beacons": 0,
+      "reference_targets": {
+        "availability": 0.9,
+        "median_error_m": 100,
+        "p95_error_m": 250
+      },
+      "reference_gate": "PASS",
+      "warning": "Targets are prototype engineering criteria, not guaranteed accuracy. Indicative radii are not confidence bounds."
+    },
+    "noise_6db": {
+      "data_kind": "synthetic",
+      "evidence": "SIMULATOR TESTED",
+      "training_points": 8,
+      "heldout_points": 100,
+      "expected_beacons": 100,
+      "located_beacons": 92,
+      "availability": 0.92,
+      "median_error_m": 161.80095590400725,
+      "p95_error_m": 506.5034826914797,
+      "max_error_m": 836.4085320530716,
+      "outside_indicative_radius": 0,
+      "extrapolated_beacons": 0,
+      "reference_targets": {
+        "availability": 0.9,
+        "median_error_m": 100,
+        "p95_error_m": 250
+      },
+      "reference_gate": "FAIL",
+      "warning": "Targets are prototype engineering criteria, not guaranteed accuracy. Indicative radii are not confidence bounds."
+    },
+    "body_shadow_15db": {
+      "data_kind": "synthetic",
+      "evidence": "SIMULATOR TESTED",
+      "training_points": 8,
+      "heldout_points": 100,
+      "expected_beacons": 100,
+      "located_beacons": 67,
+      "availability": 0.67,
+      "median_error_m": 445.99626847185095,
+      "p95_error_m": 719.8856962708131,
+      "max_error_m": 936.520206469213,
+      "outside_indicative_radius": 2,
+      "extrapolated_beacons": 0,
+      "reference_targets": {
+        "availability": 0.9,
+        "median_error_m": 100,
+        "p95_error_m": 250
+      },
+      "reference_gate": "FAIL",
+      "warning": "Targets are prototype engineering criteria, not guaranteed accuracy. Indicative radii are not confidence bounds."
+    },
+    "one_receiver_missing": {
+      "data_kind": "synthetic",
+      "evidence": "SIMULATOR TESTED",
+      "training_points": 8,
+      "heldout_points": 100,
+      "expected_beacons": 100,
+      "located_beacons": 100,
+      "availability": 1.0,
+      "median_error_m": 118.3147322502553,
+      "p95_error_m": 291.1813983515965,
+      "max_error_m": 654.8776552710934,
+      "outside_indicative_radius": 1,
+      "extrapolated_beacons": 0,
+      "reference_targets": {
+        "availability": 0.9,
+        "median_error_m": 100,
+        "p95_error_m": 250
+      },
+      "reference_gate": "FAIL",
+      "warning": "Targets are prototype engineering criteria, not guaranteed accuracy. Indicative radii are not confidence bounds."
+    },
+    "two_receivers_missing": {
+      "data_kind": "synthetic",
+      "evidence": "SIMULATOR TESTED",
+      "training_points": 8,
+      "heldout_points": 100,
+      "expected_beacons": 100,
+      "located_beacons": 0,
+      "availability": 0.0,
+      "median_error_m": null,
+      "p95_error_m": null,
+      "max_error_m": null,
+      "outside_indicative_radius": 0,
+      "extrapolated_beacons": 0,
+      "reference_targets": {
+        "availability": 0.9,
+        "median_error_m": 100,
+        "p95_error_m": 250
+      },
+      "reference_gate": "FAIL",
+      "warning": "Targets are prototype engineering criteria, not guaranteed accuracy. Indicative radii are not confidence bounds."
+    }
+  }
+}

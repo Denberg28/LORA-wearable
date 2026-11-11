@@ -18,7 +18,7 @@ class ProtocolTests(unittest.TestCase):
         for offset,value in ((0,0),(2,9),(3,9),(4,0),(10,4),(11,8),(46,1)):
             b=valid.copy();b[offset]=value
             with self.assertRaises(ValueError):decode(b.hex(),2761)
-        for b in ('','00','x'*128):
+        for b in ('','00','x'*128,' '*128, '00 '*42+'  '):
             with self.assertRaises(ValueError):decode(b,2761)
     def test_fuzz(self):
         r=random.Random(7)
@@ -106,3 +106,4 @@ class LocationTests(unittest.TestCase):
         self.assertIsNone(estimate([(13,123,0),(13.001,123,-80),(13,123.001,-80)]))
 
 if __name__=='__main__':unittest.main()
+

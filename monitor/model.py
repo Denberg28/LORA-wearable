@@ -1,9 +1,10 @@
 import json
+import hashlib
 import math
 import sqlite3
 import time
 from .protocol import decode
-from .location import estimate
+from .location import estimate, valid_calibration
 
 class Store:
     def __init__(self, path, network=2761, anchors=None):
@@ -17,8 +18,21 @@ class Store:
         CREATE TABLE IF NOT EXISTS ordering(id INTEGER PRIMARY KEY, boot INTEGER, seq INTEGER);
         CREATE TABLE IF NOT EXISTS observations(target INTEGER,boot INTEGER,seq INTEGER,anchor INTEGER,
           rssi REAL,at REAL,PRIMARY KEY(target,boot,seq,anchor));
+        CREATE TABLE IF NOT EXISTS metadata(key TEXT PRIMARY KEY, value TEXT);
         ''')
-        self.network, self.anchors = network, anchors or {}
+        self.network = network
+        self.configure_anchors(anchors or {})
+
+    def configure_anchors(self, anchors):
+        fingerprint=hashlib.sha256(json.dumps(anchors,sort_keys=True,allow_nan=False).encode()).hexdigest()
+        old=self.db.execute("SELECT value FROM metadata WHERE key='anchors'").fetchone()
+        with self.db:
+            if old is None or old[0]!=fingerprint:
+                # A different survey/model invalidates derived positions, not GPS or SOS.
+                self.db.execute('DELETE FROM observations')
+                self.db.execute("UPDATE devices SET lat=NULL,lon=NULL,fix_time=NULL,method='unknown',uncertainty=NULL WHERE method='RSSI estimate'")
+                self.db.execute("INSERT OR REPLACE INTO metadata VALUES('anchors',?)",(fingerprint,))
+        self.anchors=json.loads(json.dumps(anchors))
 
     def ingest(self, line, now=None):
         now = time.time() if now is None else now
@@ -66,17 +80,19 @@ class Store:
             return True
 
     def _locate(self, device, boot, seq, now):
-        row = self.db.execute('SELECT boot,seq,method,fix_time FROM devices WHERE id=?',(device,)).fetchone()
-        if not row or row[:2] != (boot,seq) or (row[2]=='GPS' and row[3] is not None and now-row[3]<=30):
+        row = self.db.execute('SELECT boot,seq,method,fix_time,seen FROM devices WHERE id=?',(device,)).fetchone()
+        if not row or row[:2] != (boot,seq) or not 0<=now-row[4]<=30 or (row[2]=='GPS' and row[3] is not None and now-row[3]<=30):
             return
-        samples=[]
-        for anchor,rssi in self.db.execute('SELECT anchor,rssi FROM observations WHERE target=? AND boot=? AND seq=? AND at>=?',(device,boot,seq,now-30)):
-            a=self.anchors[str(anchor)]
+        samples=[];models=[]
+        for anchor,rssi in self.db.execute('SELECT anchor,rssi FROM observations WHERE target=? AND boot=? AND seq=? AND at BETWEEN ? AND ? ORDER BY anchor',(device,boot,seq,now-30,now)):
+            a=self.anchors.get(str(anchor))
+            if a is None:continue
             samples.append((float(a['lat']),float(a['lon']),rssi))
-        result=estimate(samples)
+            models.append(a.get('calibration',{'rssi_at_1m':-40,'exponent':2.7,'sigma_db':6}))
+        result=estimate(samples,calibrations=models)
         if result:
             self.db.execute('UPDATE devices SET lat=?,lon=?,fix_time=?,method=?,uncertainty=? WHERE id=?',
-                (result.lat,result.lon,now,'RSSI estimate',result.uncertainty_m,device))
+                (result.lat,result.lon,row[4],'RSSI estimate',result.uncertainty_m,device))
 
     def receiver_coverage(self, device, now=None):
         """Direct receiver sightings for the latest wearable beacon, not a position.
@@ -113,9 +129,12 @@ def load_anchors(path):
     if not isinstance(data,dict) or len(data)>64:
         raise ValueError('anchors must be an object with at most 64 entries')
     for key,a in data.items():
-        if not 1<=int(key)<=65534 or not isinstance(a,dict):
+        if not 1<=int(key)<=65534 or str(int(key))!=key or not isinstance(a,dict):
             raise ValueError('anchor ID')
         lat,lon=float(a['lat']),float(a['lon'])
         if not math.isfinite(lat) or not math.isfinite(lon) or abs(lat)>90 or abs(lon)>180:
             raise ValueError('anchor coordinates')
+        if 'calibration' in a and not valid_calibration(a['calibration']):
+            raise ValueError('invalid anchor calibration')
     return data
+

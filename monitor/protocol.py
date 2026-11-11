@@ -23,6 +23,8 @@ def decode(value: str, network: int) -> Packet:
     if not isinstance(value, str) or len(value) != 128:
         raise ValueError('packet length')
     b = bytes.fromhex(value)
+    if len(b) != 64:
+        raise ValueError('decoded packet length')
     u16 = lambda p: struct.unpack_from('<H', b, p)[0]
     u32 = lambda p: struct.unpack_from('<I', b, p)[0]
     if b[:3] != b'LW\x01' or b[3] not in (1, 2, 3) or u16(4) != network:
@@ -34,7 +36,8 @@ def decode(value: str, network: int) -> Packet:
         raise ValueError('ordering')
     if b[11] & 2 and (abs(lat) > 900000000 or abs(lon) > 1800000000 or u16(38) > 30):
         raise ValueError('position')
-    if b[3] != 1 and (not u16(20) or not u32(22) or not u32(26)):
+    if b[3] != 1 and (u16(20) in (0, 65535) or not u32(22) or not u32(26)):
         raise ValueError('reference')
     return Packet(b[3], u16(6), u16(8), u32(12), u32(16), b[11], u16(20), u32(22), u32(26),
                   lat / 1e7, lon / 1e7, u16(38), struct.unpack_from('<h', b, 42)[0], u16(44))
+
